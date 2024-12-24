@@ -1,25 +1,42 @@
+import HomepageBanner from "@/components/homepage/HomepageBanner";
 import Image from "next/image";
+import curry from "/public/assets/images/curry.jpg" // "assets/images/curry.jpg";
+import pasta from "/public/assets/images/pasta.jpg";
+import chickAndVeg from "/public/assets/images/chick-and-veg.jpg";
+import chickAndVeg2 from "/public/assets/images/chick-and-veg2.jpg";
 
+const healthyRecipes = [
+    {
+        id: 1,
+        name: "Curry",
+        image: curry
+    },
+    {
+        id: 2,
+        name: "Pasta",
+        image: pasta
+    },
+    {
+        id: 3,
+        name: "Chiken & Vegetable",
+        image: chickAndVeg
+    },
+    {
+        id: 4,
+        name: "Chiken & Vegetable 2",
+        image: chickAndVeg2
+    },
+];
 export default function Homepage() {
     return (
         <div>
-            <div className="relative w-full">
-                <div className="w-full">
-                    <Image src="/assets/images/banner.jpg" alt="Banner Image" width={1920} height={500} className="w-full h-[50vh] object-cover" />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent">
-                    <div className="absolute top-3/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                        <h1 className="text-2xl lg:text-3xl font-bold text-white">Elevate Your Cooking Experience</h1>
-                        <p className="text-md lg:text-lg text-white">Explore Nutritious Recipes, Crafted to Inspire Your Healthy Lifestyle.</p>
-                    </div>
-                </div>
-            </div>
-            <div className="p-5 h-screen">
+            <HomepageBanner/>
+            <div className="p-5">
                 <div>
                     <h2 className="text-3xl font-bold">Welcome to Rillbite</h2>
                     <p>Discover delicious, nutritious recipes and tips to lead a healthier life.</p>
                 </div>
-                <div className="mt-10 flex gap-20">
+                <div className="mt-10 flex flex-wrap-reverse lg:flex-nowrap gap-20">
                     <div className="mt-5 rounded lg:w-1/3">
                         <Image src="/assets/images/salad.jpg" className="rounded-md w-96 h-[60vh] object-cover" alt="Banner Image" width={1000} height={500}></Image>
                     </div>
@@ -30,6 +47,23 @@ export default function Homepage() {
                         </div>
                         <div className="h-[50vh] rounded-lg">
                             <Image src="/assets/images/healthy-family.jpg" className="w-full h-[50vh] object-cover rounded-md" alt="Banner Image" width={1000} height={500}></Image>
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-10">
+                    <h2 className="text-3xl font-bold mb-10">Our Healthy Recipes</h2>
+                    <div className="flex justify-center">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        {healthyRecipes.map((recipe) => {
+                                return(
+                                    <div key={recipe.id} className="flex flex-col gap-5">
+                                        <div className="">
+                                            <Image src={recipe.image} alt="Banner Image" className="w-full h-96 object-cover" width={1000} height={500} />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-700">{recipe.name}</h3>
+                                    </div>
+                                )
+                        })}
                         </div>
                     </div>
                 </div>

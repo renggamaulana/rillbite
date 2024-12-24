@@ -9,7 +9,7 @@ export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
     return (
-        <nav className="bg-white shadow-lg p-5 flex justify-between items-center">
+        <nav className="bg-white shadow-lg p-5 sticky top-0 z-10 flex justify-between items-center">
             <div className="flex items-center">
                 <Image src="/assets/rillbite-logo.png" alt="Logo" width={50} height={50} />
                 <div className="ml-3 flex flex-col gap-0">
@@ -19,9 +19,22 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Menu Toggle Button */}
-            <div className="md:hidden flex items-center cursor-pointer" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <div className="md:hidden flex items-center cursor-pointer"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}>
                 <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+                    {isMenuOpen ? (
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    ) : (
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4 6h16M4 12h16M4 18h16"
+                        />
+                    )}
                 </svg>
             </div>
 
@@ -58,7 +71,7 @@ export default function Navbar() {
             </ul>
             {/* Mobile Menu */}
             {isMenuOpen && (
-                <MobileMenu pathname={pathname} />
+                <MobileMenu pathname={pathname} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)}  />
             )}
         </nav>
     )
