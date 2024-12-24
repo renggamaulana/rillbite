@@ -58,12 +58,12 @@ export default function Homepage() {
                                 return(
                                     <div key={recipe.id} className="flex flex-col gap-5">
                                         <div className="">
-                                            <Image src={recipe.image} alt="Banner Image" className="w-full h-96 object-cover" width={1000} height={500} />
+                                            <Image src={recipe.image} alt="Banner Image" className="w-full h-96 object-cover rounded" width={1000} height={500} />
                                         </div>
                                         <h3 className="text-xl font-bold text-gray-700">{recipe.name}</h3>
                                     </div>
                                 )
-                        })}
+                            })}
                         </div>
                     </div>
                 </div>
