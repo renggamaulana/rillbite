@@ -60,7 +60,7 @@ export default function Recipes() {
               <button
                 key={category}
                 onClick={() => handleCategoryChange(category)}
-                className={`px-4 py-2 rounded-full border hover:bg-green-500 duration-500 hover:text-white ${
+                className={`px-4 py-2 rounded-full border hover:bg-green-500 duration-300 hover:text-white ${
                   selectedCategory === category ? "bg-green-500 text-white" : "bg-white text-green-500"
                 }`}
               >
