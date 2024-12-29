@@ -19,12 +19,6 @@ export const fetchRecipes = async (category:string) => {
         console.error("Error fetching recipes:", error);
         throw error;
     }
-    console.log(response.data.results);
-    return response.data.results;
-  } catch (error) {
-    console.error("Error fetching recipes:", error);
-    throw error;
-  }
 };
 
 export const fetchRecipeDetail = async (id: number) => {
