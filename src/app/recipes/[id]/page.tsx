@@ -39,9 +39,7 @@ export default function RecipeDetail() {
   if (!recipe) {
     return (
       <div className="text-center p-8">
-        <h1 className="text-2xl font-bold text-red-500">
-          Resep tidak ditemukan
-        </h1>
+        <h1 className="text-2xl font-bold text-red-500">Recipes not found</h1>
       </div>
     );
   }
