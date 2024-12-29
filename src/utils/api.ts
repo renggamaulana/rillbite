@@ -6,7 +6,7 @@ export const fetchRecipes = async (category:string) => {
             params: {
                 query: category,
                 apiKey: process.env.NEXT_PUBLIC_API_KEY,
-                number:30
+                number:10
             },
         });
         if (response.status !== 200) {
