@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { fetchRecipeDetail } from "@/utils/api";
+import Image from "next/image";
 
 export default function RecipeDetail() {
   const [recipe, setRecipe] = useState<any>(null);
@@ -51,9 +52,11 @@ export default function RecipeDetail() {
       className="max-w-4xl mx-auto p-4"
     >
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <img
+        <Image
           src={recipe.image}
           alt={recipe.title}
+          width={100}
+          height={100}
           className="w-full h-64 object-cover"
         />
         <div className="p-6">
