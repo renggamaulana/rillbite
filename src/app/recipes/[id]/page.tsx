@@ -16,6 +16,7 @@ export default function RecipeDetail() {
       try {
         setLoading(true);
         const data = await fetchRecipeDetail(Number(params.id));
+        console.log('check response: ',data)
         setRecipe(data);
       } catch (error) {
         console.error("Error:", error);
