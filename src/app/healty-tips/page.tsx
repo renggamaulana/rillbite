@@ -1,4 +1,4 @@
-import UnderContruction from "@/components/UnderContruction";
+import UnderContruction from "@/components/UnderConstruction";
 
 export default function HealthyTips() {
     return (
