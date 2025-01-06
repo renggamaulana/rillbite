@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import MobileMenu from "../MobileMenu";
+import MobileMenu from "./MobileMenu";
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();

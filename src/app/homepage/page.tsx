@@ -4,7 +4,7 @@ import curry from "/public/assets/images/curry.jpg" // "assets/images/curry.jpg"
 import pasta from "/public/assets/images/pasta.jpg";
 import chickAndVeg from "/public/assets/images/chick-and-veg.jpg";
 import chickAndVeg2 from "/public/assets/images/chick-and-veg2.jpg";
-import HealthyRecipes from '../../components/HealtyRecipes/index';
+import HealthyRecipes from '../../components/HealthyRecipes';
 import { FaHandHoldingMedical } from "react-icons/fa";
 import { IoIosHourglass } from "react-icons/io";
 import { BiDish } from "react-icons/bi";
@@ -40,7 +40,6 @@ export default function Homepage() {
                 <div className="text-center mt-10">
                     <h2 className="text-3xl font-bold">Welcome to Rillbite</h2>
                     <p>Discover delicious, nutritious recipes and tips to lead a healthier life.</p>
-                   
                 </div>
                 <div className="w-5/6 mx-auto flex flex-wrap lg:flex-nowrap gap-20">
                     <div className="mt-5 rounded lg:w-1/3">
@@ -95,7 +94,7 @@ export default function Homepage() {
                     </div>
                 </div>
                 <HealthyRecipes recipes={healthyRecipes} />
-                <div className="h-72 p-10 rounded-lg bg-gradient-to-r from-slate-50 via-green-50 to-teal-50">
+                <div className="p-10 rounded-lg bg-gradient-to-r from-slate-50 via-green-50 to-teal-50">
                         <h2 className="text-3xl font-bold mb-10">Get Started</h2>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 ">
                             <div className="flex items-center flex-col gap-3 p-5 border border-slate-400 rounded-lg">
