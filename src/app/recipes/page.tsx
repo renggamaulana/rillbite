@@ -3,7 +3,7 @@
 import RecipeCard from "@/components/RecipeCard";
 import { fetchRecipes } from "@/utils/api";
 import { useEffect, useState } from "react";
-import { Recipe } from "../types/Recipe";
+import { Recipe } from "../../types/Recipe";
 import { motion } from "framer-motion";
 
 const CATEGORIES = ["healthy", "chicken", "noodle", "pasta", "fish", "vegetarian", "vegan", "gluten-free", "low-carb", "keto"];

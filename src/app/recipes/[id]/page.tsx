@@ -5,15 +5,17 @@ import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { fetchRecipeDetail } from "@/utils/api";
 import Image from "next/image";
+import { Ingredient, Recipe } from "@/types/Recipe";
 
-export default function RecipeDetail() {
-  const [recipe, setRecipe] = useState<any>(null);
+export default function RecipeDetail()  {
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const params = useParams();
 
   useEffect(() => {
     const getRecipeDetail = async () => {
       try {
+        console.log('params:',params);
         setLoading(true);
         const data = await fetchRecipeDetail(Number(params.id));
         console.log('check response: ',data)
@@ -28,7 +30,7 @@ export default function RecipeDetail() {
     if (params.id) {
       getRecipeDetail();
     }
-  }, [params.id]);
+  }, [params]);
 
   if (loading) {
     return (
@@ -89,7 +91,7 @@ export default function RecipeDetail() {
             <h2 className="text-xl font-semibold mb-2">Ingredients</h2>
             <ul className="list-disc pl-5">
               {recipe.extendedIngredients.map(
-                (ingredient: any, index: number) => (
+                (ingredient: Ingredient, index: number) => (
                   <li key={index}>{ingredient.original}</li>
                 )
               )}

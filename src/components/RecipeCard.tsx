@@ -1,4 +1,4 @@
-import { Recipe } from "@/app/types/Recipe";
+import { Recipe } from "@/types/Recipe";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
