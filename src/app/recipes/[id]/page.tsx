@@ -6,8 +6,76 @@ import { motion } from "framer-motion";
 import { fetchRecipeDetail } from "@/utils/api";
 import Image from "next/image";
 import { Ingredient, Recipe } from "@/types/Recipe";
-import { FaClock, FaUtensils, FaHeart, FaDollarSign, FaArrowLeft } from "react-icons/fa";
+import { FaClock, FaUtensils, FaHeart, FaDollarSign, FaArrowLeft, FaCheckCircle } from "react-icons/fa";
 import { MdRestaurant } from "react-icons/md";
+
+// Component untuk format instructions
+function InstructionsFormatter({ instructions }: { instructions: string }) {
+  const [steps, setSteps] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Remove HTML tags
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = instructions;
+    const textContent = tempDiv.textContent || tempDiv.innerText || "";
+
+    // Split by periods, numbered lists, or new lines
+    let stepsArray = textContent
+      .split(/\.\s+|\n+/)
+      .map(step => step.trim())
+      .filter(step => step.length > 20); // Filter out very short text
+
+    // If no good split found, try to split by common patterns
+    if (stepsArray.length <= 1) {
+      stepsArray = textContent
+        .split(/(?:\d+\.|Step \d+:?)/i)
+        .map(step => step.trim())
+        .filter(step => step.length > 20);
+    }
+
+    setSteps(stepsArray);
+  }, [instructions]);
+
+  if (steps.length === 0) {
+    return (
+      <div
+        dangerouslySetInnerHTML={{ __html: instructions }}
+        className="prose prose-lg max-w-none
+          prose-headings:text-gray-800 prose-headings:font-bold
+          prose-p:text-gray-700 prose-p:leading-relaxed
+          prose-li:text-gray-700 prose-li:marker:text-green-600
+          prose-strong:text-gray-800
+          prose-ol:space-y-4 prose-ul:space-y-3"
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {steps.map((step, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: index * 0.1 }}
+          className="flex gap-4 p-5 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 hover:shadow-md transition-shadow"
+        >
+          <div className="flex-shrink-0">
+            <div className="bg-gradient-to-br from-green-600 to-emerald-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
+              {index + 1}
+            </div>
+          </div>
+          <div className="flex-1">
+            <p className="text-gray-800 leading-relaxed">{step}</p>
+          </div>
+          <div className="flex-shrink-0 flex items-center">
+            <FaCheckCircle className="text-gray-300 text-xl hover:text-green-600 cursor-pointer transition-colors" />
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
 
 export default function RecipeDetail() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -51,7 +119,7 @@ export default function RecipeDetail() {
         <div className="text-center">
           <div className="text-6xl mb-4">😕</div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Recipe Not Found</h1>
-          <p className="text-gray-600 mb-6">Sorry, we couldn\'t find the recipe you\'re looking for.</p>
+          <p className="text-gray-600 mb-6">Sorry, we couldn't find the recipe you're looking for.</p>
           <button
             onClick={() => router.push("/recipes")}
             className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
@@ -190,15 +258,7 @@ export default function RecipeDetail() {
                 </div>
                 
                 {recipe.instructions ? (
-                  <div
-                    dangerouslySetInnerHTML={{ __html: recipe.instructions }}
-                    className="prose prose-lg max-w-none
-                      prose-headings:text-gray-800 prose-headings:font-bold
-                      prose-p:text-gray-700 prose-p:leading-relaxed
-                      prose-li:text-gray-700 prose-li:marker:text-green-600
-                      prose-strong:text-gray-800
-                      prose-ol:space-y-4 prose-ul:space-y-3"
-                  />
+                  <InstructionsFormatter instructions={recipe.instructions} />
                 ) : (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">📝</div>
