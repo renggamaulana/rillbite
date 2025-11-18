@@ -1,115 +1,157 @@
 import HomepageBanner from "@/components/HomepageBanner";
 import Image from "next/image";
-import curry from "/public/assets/images/curry.jpg" // "assets/images/curry.jpg";
-import pasta from "/public/assets/images/pasta.jpg";
-import chickAndVeg from "/public/assets/images/chick-and-veg.jpg";
-import chickAndVeg2 from "/public/assets/images/chick-and-veg2.jpg";
-import HealthyRecipes from '../../components/HealthyRecipes';
-import { FaHandHoldingMedical } from "react-icons/fa";
-import { IoIosHourglass } from "react-icons/io";
+import Link from "next/link";
+import { FaUtensils, FaAppleAlt, FaHeart, FaCalendarAlt } from "react-icons/fa";
+import { MdTrendingUp, MdTimer } from "react-icons/md";
 import { BiDish } from "react-icons/bi";
-import { FcApproval, FcEditImage, FcLike, FcTodoList } from "react-icons/fc";
 
-const healthyRecipes = [
-    {
-        id: 1,
-        name: "Curry",
-        image: curry
-    },
-    {
-        id: 2,
-        name: "Pasta",
-        image: pasta
-    },
-    {
-        id: 3,
-        name: "Chiken & Vegetable",
-        image: chickAndVeg
-    },
-    {
-        id: 4,
-        name: "Chiken & Vegetable 2",
-        image: chickAndVeg2
-    },
-];
 export default function Homepage() {
     return (
-        <div>
+        <div className="min-h-screen bg-gradient-to-b from-white to-green-50">
             <HomepageBanner/>
-            <div className="flex flex-col gap-10">
-                <div className="text-center mt-10">
-                    <h2 className="text-3xl font-bold">Welcome to Rillbite</h2>
-                    <p>Discover delicious, nutritious recipes and tips to lead a healthier life.</p>
+            
+            {/* Hero Section */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div className="text-center mb-16">
+                    <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent mb-4">
+                        Welcome to Rillbite
+                    </h2>
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                        Your gateway to delicious, nutritious recipes and a healthier lifestyle journey
+                    </p>
                 </div>
-                <div className="w-5/6 mx-auto flex flex-wrap lg:flex-nowrap gap-20">
-                    <div className="mt-5 rounded lg:w-1/3">
-                        <Image src="/assets/images/salad.jpg" className="rounded-md w-full h-full object-cover" alt="Banner Image" width={1000} height={500}></Image>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+                    <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                        <div className="text-4xl font-bold text-green-600 mb-2">500+</div>
+                        <div className="text-gray-600 text-sm">Healthy Recipes</div>
                     </div>
-                    <div className="flex flex-wrap flex-col gap-4 lg:w-2/3">
-                        <div>
-                            <h1 className="text-3xl lg:text-4xl font-bold">Why Rillbite?</h1>
-                            <p>Rillbite is the best recipe app for anyone who wants to lead a healthier life.</p>
-                        </div>
-                        <div className="rounded-lg">
-                            <div className="mt-5 grid grid-cols-1 gap-10 lg:grid-cols-2">
-                                <div className="flex flex-col items-center text-center border rounded shadow p-5 gap-3">
-                                    <div>
-                                        <FcApproval className="text-4xl"/>
-                                    </div>
-                                    <div className="flex flex-col gap-4">
-                                        <h2 className="text-xl font-bold text-neutral-700">Healthy and Delicious Recipes</h2>
-                                        <p className="text-md tracking-wide text-neutral-600">Rillbite offers a wide variety of recipes crafted to support a healthy lifestyle without compromising on taste. Every recipe is carefully curated for balanced nutrition.</p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-center text-center border rounded shadow p-5 gap-3">
-                                    <div>
-                                        <FcEditImage className="text-4xl"/>
-                                    </div>
-                                    <div className="flex flex-col gap-4">
-                                        <h2 className="text-xl font-bold text-neutral-700">Customizable Recipes to Fit Your Needs</h2>
-                                        <p className="text-md tracking-wide text-neutral-600">With Rillbite, you can adjust ingredients and portions based on your dietary preferences, such as vegetarian, low-sugar, or gluten-free options.</p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-center text-center border rounded shadow p-5 gap-3">
-                                    <div>
-                                        <FcLike className="text-4xl"/>
-                                    </div>
-                                    <div className="flex flex-col gap-4">
-                                        <h2 className="text-xl font-bold text-neutral-700">User-Friendly for Everyone</h2>
-                                        <p className="text-md tracking-wide text-neutral-600">The app is simple and intuitive interface makes it easy for anyone, from beginners to experienced cooks, to follow recipes and create healthy meals at home.</p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-center text-center border rounded shadow p-5 gap-3">
-                                    <div>
-                                        <FcTodoList className="text-4xl"/>
-                                    </div>
-                                    <div className="flex flex-col gap-4">
-                                        <h2 className="text-xl font-bold text-neutral-700">Comprehensive Features for a Healthy Life</h2>
-                                        <p className="text-md tracking-wide text-neutral-600">Beyond recipes, Rillbite includes additional features like calorie calculators, automated shopping lists, and nutrition tips to help you plan a healthier daily diet.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* <Image src="/assets/images/healthy-family.jpg" className="w-full h-[50vh] object-cover rounded-md" alt="Banner Image" width={1000} height={500}></Image> */}
-                        </div>
+                    <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                        <div className="text-4xl font-bold text-teal-600 mb-2">50+</div>
+                        <div className="text-gray-600 text-sm">Diet Plans</div>
+                    </div>
+                    <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                        <div className="text-4xl font-bold text-emerald-600 mb-2">10K+</div>
+                        <div className="text-gray-600 text-sm">Happy Users</div>
+                    </div>
+                    <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                        <div className="text-4xl font-bold text-lime-600 mb-2">100%</div>
+                        <div className="text-gray-600 text-sm">Satisfaction</div>
                     </div>
                 </div>
-                <HealthyRecipes recipes={healthyRecipes} />
-                <div className="p-10 rounded-lg bg-gradient-to-r from-slate-50 via-green-50 to-teal-50">
-                        <h2 className="text-3xl font-bold mb-10">Get Started</h2>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 ">
-                            <div className="flex items-center flex-col gap-3 p-5 border border-slate-400 rounded-lg">
-                                <FaHandHoldingMedical className="text-5xl text-green-600" />
-                                <p>Increase your healt with rillbite</p>
+
+                {/* Featured Section */}
+                <div className="grid lg:grid-cols-2 gap-12 mb-16 items-center">
+                    <div className="order-2 lg:order-1">
+                        <h3 className="text-3xl font-bold text-gray-800 mb-6">
+                            Why Choose Rillbite?
+                        </h3>
+                        <div className="space-y-6">
+                            <div className="flex items-start gap-4 group">
+                                <div className="bg-green-100 p-3 rounded-xl group-hover:bg-green-200 transition-colors">
+                                    <FaHeart className="text-2xl text-green-600"/>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-gray-800 mb-1">Healthy & Delicious</h4>
+                                    <p className="text-gray-600">Curated recipes that balance nutrition and taste perfectly</p>
+                                </div>
                             </div>
-                            <div className="flex items-center flex-col gap-3 p-5 border border-slate-400 rounded-lg">
-                                <IoIosHourglass className="text-5xl text-green-600" />
-                                <p>Save your time with rillbite</p>
+                            <div className="flex items-start gap-4 group">
+                                <div className="bg-teal-100 p-3 rounded-xl group-hover:bg-teal-200 transition-colors">
+                                    <FaUtensils className="text-2xl text-teal-600"/>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-gray-800 mb-1">Customizable Options</h4>
+                                    <p className="text-gray-600">Adjust recipes to fit your dietary preferences and needs</p>
+                                </div>
                             </div>
-                            <div className="flex items-center flex-col gap-3 p-5 border border-slate-400 rounded-lg">
-                                <BiDish className="text-5xl text-green-600" />
-                                <p>Make your own schedule with rillbite</p>
+                            <div className="flex items-start gap-4 group">
+                                <div className="bg-emerald-100 p-3 rounded-xl group-hover:bg-emerald-200 transition-colors">
+                                    <MdTimer className="text-2xl text-emerald-600"/>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-gray-800 mb-1">Save Time</h4>
+                                    <p className="text-gray-600">Quick and easy recipes for your busy lifestyle</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4 group">
+                                <div className="bg-lime-100 p-3 rounded-xl group-hover:bg-lime-200 transition-colors">
+                                    <MdTrendingUp className="text-2xl text-lime-600"/>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-gray-800 mb-1">Track Progress</h4>
+                                    <p className="text-gray-600">Monitor your nutrition and health goals effortlessly</p>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                    <div className="order-1 lg:order-2">
+                        <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+                            <Image 
+                                src="/assets/images/salad.jpg" 
+                                className="w-full h-[500px] object-cover" 
+                                alt="Healthy Food" 
+                                width={1000} 
+                                height={500}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* CTA Cards */}
+                <div className="grid md:grid-cols-2 gap-8 mb-16">
+                    <Link href="/recipes">
+                        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-8 text-white hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
+                            <FaAppleAlt className="text-5xl mb-4"/>
+                            <h3 className="text-2xl font-bold mb-2">Explore Recipes</h3>
+                            <p className="text-green-50 mb-4">Discover thousands of healthy and delicious recipes</p>
+                            <div className="flex items-center text-sm font-semibold">
+                                Browse Now <span className="ml-2">→</span>
+                            </div>
+                        </div>
+                    </Link>
+                    <Link href="/diet-plan">
+                        <div className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-3xl p-8 text-white hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
+                            <FaCalendarAlt className="text-5xl mb-4"/>
+                            <h3 className="text-2xl font-bold mb-2">Diet Plans</h3>
+                            <p className="text-teal-50 mb-4">Get personalized weekly meal plans for your goals</p>
+                            <div className="flex items-center text-sm font-semibold">
+                                Start Planning <span className="ml-2">→</span>
+                            </div>
+                        </div>
+                    </Link>
+                </div>
+
+                {/* Features Grid */}
+                <div className="bg-white rounded-3xl shadow-xl p-8 md:p-12">
+                    <h3 className="text-3xl font-bold text-center text-gray-800 mb-12">
+                        Everything You Need for Healthy Living
+                    </h3>
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div className="text-center group">
+                            <div className="bg-gradient-to-br from-green-100 to-green-50 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                <FaHeart className="text-4xl text-green-600" />
+                            </div>
+                            <h4 className="font-bold text-lg mb-2 text-gray-800">Improve Your Health</h4>
+                            <p className="text-gray-600">Boost your wellbeing with nutritious meal choices</p>
+                        </div>
+                        <div className="text-center group">
+                            <div className="bg-gradient-to-br from-teal-100 to-teal-50 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                <MdTimer className="text-4xl text-teal-600" />
+                            </div>
+                            <h4 className="font-bold text-lg mb-2 text-gray-800">Save Your Time</h4>
+                            <p className="text-gray-600">Quick recipes and meal prep strategies</p>
+                        </div>
+                        <div className="text-center group">
+                            <div className="bg-gradient-to-br from-emerald-100 to-emerald-50 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                <BiDish className="text-4xl text-emerald-600" />
+                            </div>
+                            <h4 className="font-bold text-lg mb-2 text-gray-800">Plan Your Meals</h4>
+                            <p className="text-gray-600">Organize your weekly menu effortlessly</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
