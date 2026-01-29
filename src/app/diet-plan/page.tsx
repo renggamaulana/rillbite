@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaPlus, FaTrash, FaEdit, FaSave } from "react-icons/fa";
-import axios from "axios";
+import { FaPlus, FaTrash, FaEdit, FaSave, FaSearch } from "react-icons/fa";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { getDietPlan, addToDietPlan, removeMealFromPlan, clearDietPlan, searchRecipes } from "@/utils/api";
 
 interface Recipe {
   id: number;
@@ -16,7 +17,7 @@ interface Recipe {
 }
 
 interface MealSlot {
-  id: string;
+  id?: number;
   recipe: Recipe | null;
 }
 
@@ -49,98 +50,164 @@ const MEAL_TYPES = [
 
 export default function DietPlan() {
   const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [selectedDay, setSelectedDay] = useState("monday");
   const [weekPlan, setWeekPlan] = useState<WeekPlan>({});
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Recipe[]>([]);
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Initialize week plan
   useEffect(() => {
-    const savedPlan = localStorage.getItem("weekDietPlan");
-    if (savedPlan) {
-      setWeekPlan(JSON.parse(savedPlan));
-    } else {
-      initializeWeekPlan();
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    } else if (isAuthenticated) {
+      loadDietPlan();
+      loadAllRecipes();
     }
-  }, []);
+  }, [isAuthenticated, authLoading]);
 
-  const initializeWeekPlan = () => {
-    const newPlan: WeekPlan = {};
-    DAYS.forEach(day => {
-      newPlan[day] = {
-        breakfast: { id: `${day}-breakfast`, recipe: null },
-        lunch: { id: `${day}-lunch`, recipe: null },
-        dinner: { id: `${day}-dinner`, recipe: null },
-      };
-    });
-    setWeekPlan(newPlan);
-  };
-
-  const savePlan = () => {
-    localStorage.setItem("weekDietPlan", JSON.stringify(weekPlan));
-    setIsEditing(false);
-    alert("Diet plan saved successfully! ✅");
-  };
-
-  const clearPlan = () => {
-    if (confirm("Are you sure you want to clear all meals?")) {
-      initializeWeekPlan();
-      localStorage.removeItem("weekDietPlan");
-    }
-  };
-
-  const searchRecipes = async () => {
-    if (!searchQuery.trim()) return;
-    
+  const loadDietPlan = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/complexSearch`,
-        {
-          params: {
-            query: searchQuery,
-            apiKey: process.env.NEXT_PUBLIC_API_KEY,
-            number: 12,
-            addRecipeInformation: true,
-          },
-        }
-      );
-      setSearchResults(response.data.results);
+      const response = await getDietPlan(1);
+      
+      // Transform API response to match our structure
+      const transformedPlan: WeekPlan = {};
+      DAYS.forEach(day => {
+        transformedPlan[day] = {
+          breakfast: { recipe: null },
+          lunch: { recipe: null },
+          dinner: { recipe: null },
+        };
+      });
+
+      // Populate with data from API
+      if (response.plan) {
+        Object.keys(response.plan).forEach(day => {
+          const dayData = response.plan[day];
+          if (dayData.breakfast) {
+            transformedPlan[day].breakfast = {
+              id: dayData.breakfast.id,
+              recipe: dayData.breakfast.recipe
+            };
+          }
+          if (dayData.lunch) {
+            transformedPlan[day].lunch = {
+              id: dayData.lunch.id,
+              recipe: dayData.lunch.recipe
+            };
+          }
+          if (dayData.dinner) {
+            transformedPlan[day].dinner = {
+              id: dayData.dinner.id,
+              recipe: dayData.dinner.recipe
+            };
+          }
+        });
+      }
+
+      setWeekPlan(transformedPlan);
     } catch (error) {
-      console.error("Error searching recipes:", error);
-      alert("Failed to search recipes. Please try again.");
+      console.error("Error loading diet plan:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const addRecipeToMeal = (recipe: Recipe) => {
-    if (!selectedMealType) return;
-
-    const newPlan = { ...weekPlan };
-    newPlan[selectedDay][selectedMealType as keyof DayPlan].recipe = recipe;
-    setWeekPlan(newPlan);
-    setShowRecipeModal(false);
-    setSearchQuery("");
-    setSearchResults([]);
-    setIsEditing(true);
+  const loadAllRecipes = async () => {
+    try {
+      const recipes = await searchRecipes("", 100); // Load all recipes
+      setAllRecipes(recipes);
+      setSearchResults(recipes);
+    } catch (error) {
+      console.error("Error loading recipes:", error);
+    }
   };
 
-  const removeRecipeFromMeal = (mealType: string) => {
-    const newPlan = { ...weekPlan };
-    newPlan[selectedDay][mealType as keyof DayPlan].recipe = null;
-    setWeekPlan(newPlan);
-    setIsEditing(true);
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults(allRecipes);
+      return;
+    }
+
+    const filtered = allRecipes.filter(recipe =>
+      recipe.title.toLowerCase().includes(query.toLowerCase())
+    );
+    setSearchResults(filtered);
+  };
+
+  const addRecipeToMeal = async (recipe: Recipe) => {
+    if (!selectedMealType) return;
+
+    try {
+      setLoading(true);
+      await addToDietPlan(recipe.id, selectedDay, selectedMealType);
+      await loadDietPlan();
+      setShowRecipeModal(false);
+      setSearchQuery("");
+      setSearchResults(allRecipes);
+    } catch (error) {
+      console.error("Error adding recipe to meal:", error);
+      alert("Failed to add recipe. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeRecipeFromMeal = async (mealId: number) => {
+    try {
+      setLoading(true);
+      await removeMealFromPlan(mealId);
+      await loadDietPlan();
+    } catch (error) {
+      console.error("Error removing meal:", error);
+      alert("Failed to remove meal. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!confirm("Are you sure you want to clear all meals?")) return;
+
+    try {
+      setLoading(true);
+      await clearDietPlan(1);
+      await loadDietPlan();
+    } catch (error) {
+      console.error("Error clearing diet plan:", error);
+      alert("Failed to clear diet plan. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openRecipeModal = (mealType: string) => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
     setSelectedMealType(mealType);
     setShowRecipeModal(true);
+    setSearchResults(allRecipes);
   };
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-600" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect in useEffect
+  }
 
   const currentDayPlan = weekPlan[selectedDay];
 
@@ -167,27 +234,9 @@ export default function DietPlan() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Action Buttons */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <div className="flex flex-wrap gap-4 justify-between items-center">
-            <div className="flex gap-4">
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2"
-              >
-                <FaEdit />
-                {isEditing ? "Cancel Edit" : "Edit Plan"}
-              </button>
-              {isEditing && (
-                <button
-                  onClick={savePlan}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2"
-                >
-                  <FaSave />
-                  Save Plan
-                </button>
-              )}
-            </div>
+          <div className="flex flex-wrap gap-4 justify-end">
             <button
-              onClick={clearPlan}
+              onClick={handleClearAll}
               className="bg-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-600 transition-all flex items-center gap-2"
             >
               <FaTrash />
@@ -244,15 +293,13 @@ export default function DietPlan() {
                           <p className="text-sm text-gray-600">{mealType.time}</p>
                         </div>
                       </div>
-                      {isEditing && (
-                        <button
-                          onClick={() => openRecipeModal(mealType.key)}
-                          className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
-                        >
-                          <FaPlus />
-                          {recipe ? "Change" : "Add Recipe"}
-                        </button>
-                      )}
+                      <button
+                        onClick={() => openRecipeModal(mealType.key)}
+                        className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                      >
+                        <FaPlus />
+                        {recipe ? "Change" : "Add Recipe"}
+                      </button>
                     </div>
                   </div>
 
@@ -294,9 +341,9 @@ export default function DietPlan() {
                           >
                             View Recipe
                           </button>
-                          {isEditing && (
+                          {meal.id && (
                             <button
-                              onClick={() => removeRecipeFromMeal(mealType.key)}
+                              onClick={() => removeRecipeFromMeal(meal.id!)}
                               className="bg-red-500 text-white px-6 py-2 rounded-xl font-semibold hover:bg-red-600 transition-all flex items-center gap-2"
                             >
                               <FaTrash />
@@ -313,7 +360,7 @@ export default function DietPlan() {
                         No recipe selected
                       </p>
                       <p className="text-gray-500 text-sm">
-                        Click (Add Recipe) to choose a meal
+                        Click "Add Recipe" to choose a meal
                       </p>
                     </div>
                   )}
@@ -330,84 +377,81 @@ export default function DietPlan() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col"
           >
             <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white p-6">
               <h2 className="text-2xl font-bold mb-2">Search Recipes</h2>
               <p className="text-teal-100">Find the perfect recipe for your {selectedMealType}</p>
             </div>
 
-            <div className="p-6">
+            <div className="p-6 flex-1 overflow-y-auto">
               {/* Search Input */}
-              <div className="flex gap-3 mb-6">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && searchRecipes()}
-                  placeholder="Search for recipes... (e.g., chicken, salad, pasta)"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-                <button
-                  onClick={searchRecipes}
-                  disabled={loading}
-                  className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
-                >
-                  {loading ? "Searching..." : "Search"}
-                </button>
+              <div className="mb-6">
+                <div className="relative">
+                  <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    placeholder="Search recipes by name..."
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    autoFocus
+                  />
+                </div>
               </div>
 
               {/* Search Results */}
-              <div className="max-h-[50vh] overflow-y-auto">
-                {searchResults.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {searchResults.map((recipe) => (
-                      <div
-                        key={recipe.id}
-                        className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                        onClick={() => addRecipeToMeal(recipe)}
-                      >
-                        <div className="relative h-40">
-                          <Image
-                            src={recipe.image}
-                            alt={recipe.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <h3 className="font-bold text-gray-800 mb-2 line-clamp-2">
-                            {recipe.title}
-                          </h3>
-                          <div className="flex gap-3 text-sm text-gray-600">
-                            {recipe.readyInMinutes && (
-                              <span>⏱️ {recipe.readyInMinutes} min</span>
-                            )}
-                            {recipe.servings && (
-                              <span>🍽️ {recipe.servings} servings</span>
-                            )}
-                          </div>
+              {searchResults.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {searchResults.map((recipe) => (
+                    <div
+                      key={recipe.id}
+                      className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => addRecipeToMeal(recipe)}
+                    >
+                      <div className="relative h-40">
+                        <Image
+                          src={recipe.image}
+                          alt={recipe.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-gray-800 mb-2 line-clamp-2">
+                          {recipe.title}
+                        </h3>
+                        <div className="flex gap-3 text-sm text-gray-600">
+                          {recipe.readyInMinutes && (
+                            <span>⏱️ {recipe.readyInMinutes} min</span>
+                          )}
+                          {recipe.servings && (
+                            <span>🍽️ {recipe.servings} servings</span>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <p className="text-gray-600 font-semibold">
-                      {loading ? "Searching..." : "Search for recipes to add to your meal plan"}
-                    </p>
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <p className="text-gray-600 font-semibold">
+                    No recipes found
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    Try searching with different keywords
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="bg-gray-50 p-6 flex justify-end gap-3">
+            <div className="bg-gray-50 p-6 flex justify-end gap-3 border-t">
               <button
                 onClick={() => {
                   setShowRecipeModal(false);
                   setSearchQuery("");
-                  setSearchResults([]);
+                  setSearchResults(allRecipes);
                 }}
                 className="px-6 py-3 rounded-xl font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
               >

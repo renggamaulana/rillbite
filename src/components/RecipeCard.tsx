@@ -1,16 +1,51 @@
+"use client";
+
 import { Recipe } from "@/types/Recipe";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FaHeart, FaClock } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { toggleFavorite, checkFavorite } from "@/utils/api";
 
 export default function RecipeCard({ recipe }: { recipe: Recipe }) {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  useEffect(() => {
+    if (isAuthenticated) {
+      checkFavoriteStatus();
+    }
+  }, [isAuthenticated, recipe.id]);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const result = await checkFavorite(recipe.id);
+      setIsFavorite(result.is_favorited);
+    } catch (error) {
+      console.error("Error checking favorite:", error);
+    }
+  };
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await toggleFavorite(recipe.id);
+      setIsFavorite(result.is_favorited);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -32,7 +67,8 @@ export default function RecipeCard({ recipe }: { recipe: Recipe }) {
         {/* Favorite Button */}
         <button
           onClick={handleFavoriteClick}
-          className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-all duration-300 shadow-lg"
+          disabled={loading}
+          className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-all duration-300 shadow-lg disabled:opacity-50"
         >
           <FaHeart 
             className={`text-xl transition-colors ${
