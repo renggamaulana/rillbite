@@ -224,7 +224,7 @@ export default function Navbar() {
                     user={user}
                     onLogout={handleLogout}
                 />
-            )}
+            )} 
         </nav>
     )
 }

@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toggleFavorite, checkFavorite } from "@/utils/api";
 
 export default function RecipeCard({ recipe }: { recipe: Recipe }) {
-  const router = useRouter();
+  const router = useRouter(); 
   const { isAuthenticated } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
