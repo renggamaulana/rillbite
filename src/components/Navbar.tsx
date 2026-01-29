@@ -221,8 +221,8 @@ export default function Navbar() {
                     isOpen={isMenuOpen} 
                     onClose={() => setIsMenuOpen(false)}
                     isAuthenticated={isAuthenticated}
-                    user={user}
-                    onLogout={handleLogout}
+                    // user={user}
+                    // onLogout={handleLogout}
                 />
             )} 
         </nav>

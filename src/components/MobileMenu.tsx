@@ -1,15 +1,19 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+interface MobileMenuProps {
+  pathname: string;
+  isOpen: boolean;
+  onClose: () => void;
+  isAuthenticated: boolean;
+}
+
 export default function MobileMenu({ 
   pathname, 
   isOpen, 
-  onClose 
-}: { 
-  pathname: string; 
-  isOpen: boolean; 
-  onClose: () => void 
-}) {
+  onClose,
+  // isAuthenticated,
+}: MobileMenuProps) {
   return (
     <>
       {/* Overlay */}
@@ -102,9 +106,9 @@ export default function MobileMenu({
               </Link>
             </li>
             <li>
-              <Link onClick={onClose} href="/healty-tips">
+              <Link onClick={onClose} href="/healthy-tips">
                 <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  pathname === "/healty-tips"
+                  pathname === "/healthy-tips"
                     ? "bg-gradient-to-r from-green-600 to-teal-600 text-white shadow-md"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}>
