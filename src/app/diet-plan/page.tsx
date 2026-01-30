@@ -2,7 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaPlus, FaTrash, FaEdit, FaSave, FaSearch } from "react-icons/fa";
+import { FaPlus, 
+        FaTrash, 
+        // FaEdit, 
+        // FaSave, 
+        FaSearch 
+      } from "react-icons/fa";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -59,7 +64,7 @@ export default function DietPlan() {
   const [searchResults, setSearchResults] = useState<Recipe[]>([]);
   const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  // const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
