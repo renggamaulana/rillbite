@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://katalisdev.space/api";
+// const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 // Get auth token from localStorage
 const getAuthToken = () => {
@@ -13,6 +14,10 @@ const getAuthToken = () => {
 // Create axios instance with auth header
 const apiClient = axios.create({
   baseURL: API_BASE,
+  headers: {
+    'Accept': 'application/json', // Memberitahu Laravel ini adalah request API
+    'Content-Type': 'application/json',
+  },
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -68,6 +73,8 @@ export const login = async (email: string, password: string) => {
   const response = await axios.post(`${API_BASE}/auth/login`, {
     email,
     password,
+  }, {
+    withCredentials: false // Paksa untuk tidak mengirim cookie agar tidak memicu CSRF
   });
   return response.data;
 };

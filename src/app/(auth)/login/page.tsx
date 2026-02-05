@@ -23,6 +23,7 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/');
     } catch (err: any) {
+      console.log(err)
       setError(err.response?.data?.message || 'Invalid credentials');
     } finally {
       setLoading(false);
