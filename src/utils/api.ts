@@ -29,40 +29,42 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // ============ Recipe APIs ============
-export interface RecipeSearchParams {
-  query?: string;
-  cuisine?: string;
-  diet?: string;
-  type?: string;
-  intolerances?: string;
-  maxReadyTime?: number;
-  number?: number;
-  offset?: number;
-}
-// Complex search with filters
-export const searchRecipes = async (params: RecipeSearchParams) => {
-  const response = await apiClient.get('/recipes/complexSearch', { params });
-  return response.data;
-};
 
-// Get recipes by category
 export const fetchRecipes = async (category: string) => {
-  const response = await apiClient.get(`/recipes/category/${category}`);
-  return response.data.data;
+  try {
+    const response = await axios.get(`${API_BASE}/recipes/complexSearch`, {
+      params: {
+        query: category,
+        number: 12
+      },
+    });
+    return response.data.results;
+  } catch (error) {
+    console.error("Error fetching recipes:", error);
+    throw error;
+  }
 };
 
-// Get single recipe detail
-export const getRecipeDetail = async (id: string | number) => {
-  const response = await apiClient.get(`/recipes/${id}/information`);
-  return response.data.data;
+export const searchRecipes = async (query: string, number: number = 12) => {
+  try {
+    const response = await axios.get(`${API_BASE}/recipes/complexSearch`, {
+      params: { query, number },
+    });
+    return response.data.results;
+  } catch (error) {
+    console.error("Error searching recipes:", error);
+    throw error;
+  }
 };
 
-// Get random recipes
-export const getRandomRecipes = async (number: number = 10, tags?: string) => {
-  const response = await apiClient.get('/recipes/random', {
-    params: { number, tags }
-  });
-  return response.data.data;
+export const fetchRecipeDetail = async (id: number) => {
+  try {
+    const response = await axios.get(`${API_BASE}/recipes/${id}/information`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching recipe detail:", error);
+    throw error;
+  }
 };
 
 // ============ Auth APIs ============
