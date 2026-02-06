@@ -6,14 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import MobileMenu from "./MobileMenu";
 import { useAuth } from "@/context/AuthContext";
-import { FaUser, FaSignOutAlt, FaHeart, FaCalendarAlt, FaCog } from "react-icons/fa";
+import { FaUser, FaSignOutAlt, FaHeart, FaCalendarAlt, FaCog, FaPlus } from "react-icons/fa";
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
-    const { user, isAuthenticated, logout, loading } = useAuth();
+    const { user, isAuthenticated, isAdmin, logout, loading } = useAuth();
     
     const handleLogout = async () => {
         await logout();
@@ -83,9 +83,9 @@ export default function Navbar() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/healty-tips">
+                                <Link href="/healthy-tips">
                                     <span className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                                        pathname === '/healty-tips' 
+                                        pathname === '/healthy-tips' 
                                             ? 'bg-gradient-to-r from-green-600 to-teal-600 text-white shadow-md' 
                                             : 'text-gray-700 hover:bg-gray-100'
                                     }`}>
@@ -104,6 +104,21 @@ export default function Navbar() {
                                     </span>
                                 </Link>
                             </li>
+                            {/* Admin Menu */}
+                            {isAdmin && (
+                                <li>
+                                    <Link href="/admin/add-recipe">
+                                        <span className={`px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+                                            pathname === '/admin/add-recipe' 
+                                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md' 
+                                                : 'text-purple-700 hover:bg-purple-50'
+                                        }`}>
+                                            <FaPlus className="text-sm" />
+                                            Add Recipe
+                                        </span>
+                                    </Link>
+                                </li>
+                            )}
                         </ul>
 
                         {/* Auth Section */}
@@ -119,6 +134,7 @@ export default function Navbar() {
                                                 <FaUser className="text-green-600" />
                                             </div>
                                             <span className="max-w-32 truncate">{user?.name}</span>
+                                            {isAdmin && <span className="px-2 py-0.5 bg-purple-500 text-xs rounded-full">Admin</span>}
                                             <svg className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                             </svg>
@@ -134,6 +150,7 @@ export default function Navbar() {
                                                     <div className="px-4 py-3 border-b border-gray-100">
                                                         <p className="text-sm text-gray-500">Signed in as</p>
                                                         <p className="text-sm font-semibold text-gray-800 truncate">{user?.email}</p>
+                                                        {isAdmin && <span className="inline-block mt-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">Administrator</span>}
                                                     </div>
                                                     <Link href="/favorites" onClick={() => setShowUserMenu(false)}>
                                                         <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 transition-colors">
@@ -153,6 +170,17 @@ export default function Navbar() {
                                                             <span className="text-gray-700 font-medium">Edit Profile</span>
                                                         </div>
                                                     </Link>
+                                                    {isAdmin && (
+                                                        <>
+                                                            <div className="border-t border-gray-100 my-2"></div>
+                                                            <Link href="/admin/add-recipe" onClick={() => setShowUserMenu(false)}>
+                                                                <div className="px-4 py-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3 transition-colors">
+                                                                    <FaPlus className="text-purple-600 text-lg" />
+                                                                    <span className="text-purple-700 font-medium">Add Recipe</span>
+                                                                </div>
+                                                            </Link>
+                                                        </>
+                                                    )}
                                                     <div className="border-t border-gray-100 mt-2 pt-2">
                                                         <button
                                                             onClick={handleLogout}
@@ -221,8 +249,6 @@ export default function Navbar() {
                     isOpen={isMenuOpen} 
                     onClose={() => setIsMenuOpen(false)}
                     isAuthenticated={isAuthenticated}
-                    // user={user}
-                    // onLogout={handleLogout}
                 />
             )} 
         </nav>

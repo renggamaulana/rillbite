@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://katalisdev.space/api";
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://katalisdev.space/api";
+// const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 // Get auth token from localStorage
 const getAuthToken = () => {
@@ -15,7 +15,7 @@ const getAuthToken = () => {
 const apiClient = axios.create({
   baseURL: API_BASE,
   headers: {
-    'Accept': 'application/json', // Memberitahu Laravel ini adalah request API
+    'Accept': 'application/json',
     'Content-Type': 'application/json',
   },
 });
@@ -74,7 +74,7 @@ export const login = async (email: string, password: string) => {
     email,
     password,
   }, {
-    withCredentials: false // Paksa untuk tidak mengirim cookie agar tidak memicu CSRF
+    withCredentials: false
   });
   return response.data;
 };
@@ -166,5 +166,46 @@ export const getDayNutrition = async (day: string, week: number = 1) => {
   const response = await apiClient.get(`/diet-plans/nutrition/${day}`, {
     params: { week }
   });
+  return response.data;
+};
+
+// ============ User Recipe APIs (Admin Only) ============
+
+export const getUserRecipes = async () => {
+  const response = await apiClient.get('/user-recipes');
+  return response.data;
+};
+
+export const createUserRecipe = async (recipeData: {
+  title: string;
+  summary?: string;
+  image?: string;
+  ready_in_minutes?: number;
+  servings?: number;
+  health_score?: number;
+  price_per_serving?: number;
+  instructions?: string;
+  categories?: string[];
+  vegetarian?: boolean;
+  vegan?: boolean;
+  gluten_free?: boolean;
+  dairy_free?: boolean;
+}) => {
+  const response = await apiClient.post('/user-recipes', recipeData);
+  return response.data;
+};
+
+export const updateUserRecipe = async (id: number, recipeData: any) => {
+  const response = await apiClient.put(`/user-recipes/${id}`, recipeData);
+  return response.data;
+};
+
+export const deleteUserRecipe = async (id: number) => {
+  const response = await apiClient.delete(`/user-recipes/${id}`);
+  return response.data;
+};
+
+export const getUserRecipeDetail = async (id: number) => {
+  const response = await apiClient.get(`/user-recipes/${id}`);
   return response.data;
 };
