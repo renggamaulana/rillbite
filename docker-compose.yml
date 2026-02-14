@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  web:
+    image: renggamaulana/rillbite:dev
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
