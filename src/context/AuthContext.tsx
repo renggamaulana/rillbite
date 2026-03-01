@@ -1,7 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { login as apiLogin, register as apiRegister, logout as apiLogout, getCurrentUser } from '@/utils/api';
+import {
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  getCurrentUser,
+  updateProfile,
+  UpdateProfilePayload,
+} from '@/utils/api';
 
 interface User {
   id: number;
@@ -16,6 +23,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Update profile and sync user state in context */
+  updateUser: (payload: UpdateProfilePayload) => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
 }
@@ -39,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       localStorage.removeItem('auth_token');
-      console.log(error)
+      console.log(error);
     } finally {
       setLoading(false);
     }
@@ -47,8 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await apiLogin(email, password);
-    const token = response.access_token;
-    localStorage.setItem('auth_token', token);
+    localStorage.setItem('auth_token', response.access_token);
     setUser(response.user);
   };
 
@@ -67,16 +75,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  /**
+   * Call API to update profile, then sync the returned user
+   * into context so all components reflect the new data instantly.
+   */
+  const updateUser = async (payload: UpdateProfilePayload) => {
+    const response = await updateProfile(payload);
+    setUser(response.user);
+  };
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      login, 
-      register, 
-      logout, 
-      isAuthenticated: !!user,
-      isAdmin: user?.role === 'admin'
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        updateUser,
+        isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

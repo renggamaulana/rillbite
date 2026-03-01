@@ -1,25 +1,31 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
-// const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://katalisdev.space/api";
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+/* =========================================================
+   CONFIG
+========================================================= */
 
-// Get auth token from localStorage
-const getAuthToken = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
-  }
-  return null;
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+
+const getAuthToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("auth_token");
 };
 
-// Create axios instance with auth header
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: API_BASE,
+  timeout: 15000,
   headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
+    Accept: "application/json",
+    "Content-Type": "application/json",
   },
 });
 
+/* =========================================================
+   INTERCEPTORS
+========================================================= */
+
+// Inject token
 apiClient.interceptors.request.use((config) => {
   const token = getAuthToken();
   if (token) {
@@ -28,152 +34,215 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// ============ Recipe APIs ============
-
-export const fetchRecipes = async (category: string) => {
-  try {
-    const response = await axios.get(`${API_BASE}/recipes/complexSearch`, {
-      params: {
-        query: category,
-        number: 12
-      },
-    });
-    return response.data.results;
-  } catch (error) {
-    console.error("Error fetching recipes:", error);
-    throw error;
+// Auto logout on 401
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<any>) => {
+    if (error.response?.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth_token");
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
   }
-};
+);
 
-export const searchRecipes = async (query: string, number: number = 12) => {
-  try {
-    const response = await axios.get(`${API_BASE}/recipes/complexSearch`, {
-      params: { query, number },
-    });
-    return response.data.results;
-  } catch (error) {
-    console.error("Error searching recipes:", error);
-    throw error;
-  }
-};
+/* =========================================================
+   AUTH TYPES
+========================================================= */
 
-export const fetchRecipeDetail = async (id: number) => {
-  try {
-    const response = await axios.get(`${API_BASE}/recipes/${id}/information`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching recipe detail:", error);
-    throw error;
-  }
-};
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  role: "user" | "admin";
+}
 
-// ============ Auth APIs ============
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+  message?: string;
+}
 
-export const login = async (email: string, password: string) => {
-  const response = await axios.post(`${API_BASE}/auth/login`, {
+/* =========================================================
+   AUTH APIs
+========================================================= */
+
+export const login = async (
+  email: string,
+  password: string
+): Promise<AuthResponse> => {
+  const { data } = await apiClient.post("/auth/login", {
     email,
     password,
-  }, {
-    withCredentials: false
   });
-  return response.data;
+
+  if (typeof window !== "undefined" && data.token) {
+    localStorage.setItem("auth_token", data.token);
+  }
+
+  return data;
 };
 
-export const register = async (name: string, email: string, password: string) => {
-  const response = await axios.post(`${API_BASE}/auth/register`, {
+export const register = async (
+  name: string,
+  email: string,
+  password: string
+): Promise<AuthResponse> => {
+  const { data } = await apiClient.post("/auth/register", {
     name,
     email,
     password,
     password_confirmation: password,
   });
-  return response.data;
+
+  return data;
 };
 
 export const logout = async () => {
-  const response = await apiClient.post('/auth/logout');
-  return response.data;
+  const { data } = await apiClient.post("/auth/logout");
+
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth_token");
+  }
+
+  return data;
 };
 
-export const getCurrentUser = async () => {
-  const response = await apiClient.get('/auth/user');
-  return response.data;
+export const getCurrentUser = async (): Promise<AuthUser> => {
+  const { data } = await apiClient.get("/auth/user");
+  return data;
 };
 
-// ============ Favorite APIs ============
+/* =========================================================
+   UPDATE PROFILE
+========================================================= */
+
+export interface UpdateProfilePayload {
+  name?: string;
+  email?: string;
+  current_password?: string;
+  password?: string;
+  password_confirmation?: string;
+}
+
+export interface UpdateProfileResponse {
+  message: string;
+  user: AuthUser;
+}
+
+export const updateProfile = async (
+  payload: UpdateProfilePayload
+): Promise<UpdateProfileResponse> => {
+  const { data } = await apiClient.put("/auth/update-profile", payload);
+  return data;
+};
+
+/* =========================================================
+   RECIPE APIs
+========================================================= */
+
+export const fetchRecipes = async (category: string) => {
+  const { data } = await apiClient.get("/recipes/complexSearch", {
+    params: { query: category, number: 12 },
+  });
+  return data.results;
+};
+
+export const searchRecipes = async (query: string, number = 12) => {
+  const { data } = await apiClient.get("/recipes/complexSearch", {
+    params: { query, number },
+  });
+  return data.results;
+};
+
+export const fetchRecipeDetail = async (id: number) => {
+  const { data } = await apiClient.get(`/recipes/${id}/information`);
+  return data;
+};
+
+/* =========================================================
+   FAVORITES APIs
+========================================================= */
 
 export const getFavorites = async () => {
-  const response = await apiClient.get('/favorites');
-  return response.data;
+  const { data } = await apiClient.get("/favorites");
+  return data;
 };
 
 export const toggleFavorite = async (recipeId: number) => {
-  const response = await apiClient.post(`/favorites/toggle/${recipeId}`);
-  return response.data;
+  const { data } = await apiClient.post(`/favorites/toggle/${recipeId}`);
+  return data;
 };
 
 export const checkFavorite = async (recipeId: number) => {
-  const response = await apiClient.get(`/favorites/check/${recipeId}`);
-  return response.data;
+  const { data } = await apiClient.get(`/favorites/check/${recipeId}`);
+  return data;
 };
 
 export const addToFavorites = async (recipeId: number) => {
-  const response = await apiClient.post(`/favorites/${recipeId}`);
-  return response.data;
+  const { data } = await apiClient.post(`/favorites/${recipeId}`);
+  return data;
 };
 
 export const removeFromFavorites = async (recipeId: number) => {
-  const response = await apiClient.delete(`/favorites/${recipeId}`);
-  return response.data;
+  const { data } = await apiClient.delete(`/favorites/${recipeId}`);
+  return data;
 };
 
-// ============ Diet Plan APIs ============
+/* =========================================================
+   DIET PLAN APIs
+========================================================= */
 
-export const getDietPlan = async (week: number = 1) => {
-  const response = await apiClient.get('/diet-plans', {
-    params: { week }
+export const getDietPlan = async (week = 1) => {
+  const { data } = await apiClient.get("/diet-plans", {
+    params: { week },
   });
-  return response.data;
+  return data;
 };
 
 export const addToDietPlan = async (
   recipeId: number,
   dayOfWeek: string,
   mealType: string,
-  weekNumber: number = 1
+  weekNumber = 1
 ) => {
-  const response = await apiClient.post('/diet-plans', {
+  const { data } = await apiClient.post("/diet-plans", {
     recipe_id: recipeId,
     day_of_week: dayOfWeek,
     meal_type: mealType,
     week_number: weekNumber,
   });
-  return response.data;
+  return data;
 };
 
 export const removeMealFromPlan = async (id: number) => {
-  const response = await apiClient.delete(`/diet-plans/${id}`);
-  return response.data;
+  const { data } = await apiClient.delete(`/diet-plans/${id}`);
+  return data;
 };
 
-export const clearDietPlan = async (week: number = 1) => {
-  const response = await apiClient.delete('/diet-plans/clear', {
-    params: { week }
+export const clearDietPlan = async (week = 1) => {
+  const { data } = await apiClient.delete("/diet-plans/clear", {
+    params: { week },
   });
-  return response.data;
+  return data;
 };
 
-export const getDayNutrition = async (day: string, week: number = 1) => {
-  const response = await apiClient.get(`/diet-plans/nutrition/${day}`, {
-    params: { week }
+export const getDayNutrition = async (day: string, week = 1) => {
+  const { data } = await apiClient.get(`/diet-plans/nutrition/${day}`, {
+    params: { week },
   });
-  return response.data;
+  return data;
 };
 
-// ============ User Recipe APIs (Admin Only) ============
+/* =========================================================
+   ADMIN - USER RECIPES
+========================================================= */
 
 export const getUserRecipes = async () => {
-  const response = await apiClient.get('/user-recipes');
-  return response.data;
+  const { data } = await apiClient.get("/user-recipes");
+  return data;
 };
 
 export const createUserRecipe = async (recipeData: {
@@ -191,21 +260,21 @@ export const createUserRecipe = async (recipeData: {
   gluten_free?: boolean;
   dairy_free?: boolean;
 }) => {
-  const response = await apiClient.post('/user-recipes', recipeData);
-  return response.data;
+  const { data } = await apiClient.post("/user-recipes", recipeData);
+  return data;
 };
 
 export const updateUserRecipe = async (id: number, recipeData: any) => {
-  const response = await apiClient.put(`/user-recipes/${id}`, recipeData);
-  return response.data;
+  const { data } = await apiClient.put(`/user-recipes/${id}`, recipeData);
+  return data;
 };
 
 export const deleteUserRecipe = async (id: number) => {
-  const response = await apiClient.delete(`/user-recipes/${id}`);
-  return response.data;
+  const { data } = await apiClient.delete(`/user-recipes/${id}`);
+  return data;
 };
 
 export const getUserRecipeDetail = async (id: number) => {
-  const response = await apiClient.get(`/user-recipes/${id}`);
-  return response.data;
+  const { data } = await apiClient.get(`/user-recipes/${id}`);
+  return data;
 };
