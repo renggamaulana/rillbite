@@ -8,6 +8,8 @@ import Image from "next/image";
 import { Ingredient, Recipe } from "@/types/Recipe";
 import { FaClock, FaUtensils, FaHeart, FaDollarSign, FaArrowLeft, FaCheckCircle } from "react-icons/fa";
 import { MdRestaurant } from "react-icons/md";
+import { toggleFavorite, checkFavorite } from "@/utils/api";
+import { useAuth } from "@/context/AuthContext";
 
 // Component untuk format instructions
 function InstructionsFormatter({ instructions }: { instructions: string }) {
@@ -81,6 +83,7 @@ export default function RecipeDetail() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const { isAuthenticated } = useAuth();
   const params = useParams();
   const router = useRouter();
 
@@ -100,7 +103,35 @@ export default function RecipeDetail() {
     if (params.id) {
       getRecipeDetail();
     }
-  }, [params]);
+    if(isAuthenticated) {
+      checkFavoriteStatus();
+    }
+  }, [isAuthenticated, params]);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const result = await checkFavorite(Number(params.id));
+      setIsFavorite(result.is_favorited);
+    } catch (error) {
+      console.error("Error checking favorite:", error);
+    }
+  }
+
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const result = await toggleFavorite(Number(params.id));
+      setIsFavorite(result.is_favorited);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    } 
+  };
 
   if (loading) {
     return (
@@ -154,7 +185,8 @@ export default function RecipeDetail() {
 
         {/* Favorite Button */}
         <button
-          onClick={() => setIsFavorite(!isFavorite)}
+          onClick={handleFavoriteToggle}
+          disabled={loading}
           className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-all shadow-lg z-10"
         >
           <FaHeart className={`text-xl ${isFavorite ? "text-red-500" : "text-gray-400"}`} />
@@ -292,7 +324,7 @@ export default function RecipeDetail() {
               ← Back to Recipes
             </button>
             <button
-              onClick={() => setIsFavorite(!isFavorite)}
+              onClick={handleFavoriteToggle}
               className={`px-8 py-3 rounded-xl font-semibold transition-all ${
                 isFavorite
                   ? "bg-red-500 text-white hover:bg-red-600"
