@@ -52,17 +52,24 @@ apiClient.interceptors.response.use(
    AUTH TYPES
 ========================================================= */
 
-export interface AuthUser {
+// Single source of truth untuk shape User
+export interface User {
   id: number;
   name: string;
   email: string;
   role: "user" | "admin";
 }
 
+// Response dari /auth/login dan /auth/register
 export interface AuthResponse {
-  token: string;
-  user: AuthUser;
+  access_token: string;
+  user: User;
   message?: string;
+}
+
+// Response dari /auth/user
+export interface AuthUser {
+  user: User;
 }
 
 /* =========================================================
@@ -78,8 +85,8 @@ export const login = async (
     password,
   });
 
-  if (typeof window !== "undefined" && data.token) {
-    localStorage.setItem("auth_token", data.token);
+  if (typeof window !== "undefined" && data.access_token) {
+    localStorage.setItem("auth_token", data.access_token);
   }
 
   return data;
@@ -129,7 +136,7 @@ export interface UpdateProfilePayload {
 
 export interface UpdateProfileResponse {
   message: string;
-  user: AuthUser;
+  user: User;
 }
 
 export const updateProfile = async (

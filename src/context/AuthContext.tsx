@@ -8,14 +8,8 @@ import {
   getCurrentUser,
   updateProfile,
   UpdateProfilePayload,
+  User, // ← single source of truth dari api.ts
 } from '@/utils/api';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: 'user' | 'admin';
-}
 
 interface AuthContextType {
   user: User | null;
@@ -43,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = localStorage.getItem('auth_token');
       if (token) {
-        const response = await getCurrentUser();
+        const response = await getCurrentUser(); // returns { user: User }
         setUser(response.user);
       }
     } catch (error) {
@@ -55,13 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
-    const response = await apiLogin(email, password);
+    const response = await apiLogin(email, password); // returns { access_token, user: User }
     localStorage.setItem('auth_token', response.access_token);
     setUser(response.user);
   };
 
   const register = async (name: string, email: string, password: string) => {
-    const response = await apiRegister(name, email, password);
+    const response = await apiRegister(name, email, password); // returns { access_token, user: User }
     localStorage.setItem('auth_token', response.access_token);
     setUser(response.user);
   };
@@ -80,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * into context so all components reflect the new data instantly.
    */
   const updateUser = async (payload: UpdateProfilePayload) => {
-    const response = await updateProfile(payload);
+    const response = await updateProfile(payload); // returns { message, user: User }
     setUser(response.user);
   };
 

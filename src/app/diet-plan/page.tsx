@@ -545,4 +545,4 @@ function FullPageSpinner() {
       <div className="w-14 h-14 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
-}
+} 
