@@ -5,7 +5,7 @@ import axios, { AxiosError } from "axios";
 ========================================================= */
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.rillbite.com/api";
 
 const getAuthToken = (): string | null => {
   if (typeof window === "undefined") return null;
