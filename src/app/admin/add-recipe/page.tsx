@@ -4,58 +4,106 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createUserRecipe } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
+import { NutritionFormData, emptyNutritionForm } from "@/types/Recipe";
 import { motion } from "framer-motion";
 import { FaArrowLeft, FaPlus, FaTimes } from "react-icons/fa";
 import Link from "next/link";
+import NutritionFormSection from "@/components/NutritionFormSection";
+
+// ============================================================
+// Types
+// ============================================================
+
+interface RecipeFormData {
+  title: string;
+  summary: string;
+  image: string;
+  ready_in_minutes: string;
+  servings: string;
+  health_score: string;
+  price_per_serving: string;
+  instructions: string;
+  vegetarian: boolean;
+  vegan: boolean;
+  gluten_free: boolean;
+  dairy_free: boolean;
+}
+
+const initialFormData: RecipeFormData = {
+  title: "",
+  summary: "",
+  image: "",
+  ready_in_minutes: "",
+  servings: "",
+  health_score: "",
+  price_per_serving: "",
+  instructions: "",
+  vegetarian: false,
+  vegan: false,
+  gluten_free: false,
+  dairy_free: false,
+};
+
+// ============================================================
+// Helpers
+// ============================================================
+
+/** Returns true if all 4 nutrition fields are filled */
+const hasNutritionData = (n: NutritionFormData): boolean =>
+  [n.calories, n.protein, n.fat, n.carbohydrates].every((v) => v.trim() !== "");
+
+// ============================================================
+// Page
+// ============================================================
 
 export default function AddRecipe() {
   const router = useRouter();
   const { isAdmin } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [categories, setCategories] = useState<string[]>([]);
+
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState("");
+  const [categories, setCategories]       = useState<string[]>([]);
   const [categoryInput, setCategoryInput] = useState("");
+  const [formData, setFormData]           = useState<RecipeFormData>(initialFormData);
+  const [nutrition, setNutrition]         = useState<NutritionFormData>(emptyNutritionForm());
 
-  const [formData, setFormData] = useState({
-    title: "",
-    summary: "",
-    image: "",
-    ready_in_minutes: "",
-    servings: "",
-    health_score: "",
-    price_per_serving: "",
-    instructions: "",
-    vegetarian: false,
-    vegan: false,
-    gluten_free: false,
-    dairy_free: false,
-  });
-
-  // Redirect if not admin
+  // Redirect non-admins
   if (!isAdmin) {
     router.push("/");
     return null;
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // ---- Handlers ----
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target;
     if (type === "checkbox") {
-      const target = e.target as HTMLInputElement;
-      setFormData({ ...formData, [name]: target.checked });
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData((prev) => ({ ...prev, [name]: checked }));
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
+  const handleNutritionChange = (
+    field: keyof NutritionFormData,
+    value: string
+  ) => {
+    setNutrition((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleAddCategory = () => {
-    if (categoryInput.trim() && !categories.includes(categoryInput.trim())) {
-      setCategories([...categories, categoryInput.trim()]);
+    const trimmed = categoryInput.trim();
+    if (trimmed && !categories.includes(trimmed)) {
+      setCategories((prev) => [...prev, trimmed]);
       setCategoryInput("");
     }
   };
 
   const handleRemoveCategory = (category: string) => {
-    setCategories(categories.filter((c) => c !== category));
+    setCategories((prev) => prev.filter((c) => c !== category));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,23 +112,44 @@ export default function AddRecipe() {
     setError("");
 
     try {
-      const recipeData = {
+      const payload = {
         ...formData,
-        ready_in_minutes: formData.ready_in_minutes ? parseInt(formData.ready_in_minutes) : undefined,
-        servings: formData.servings ? parseInt(formData.servings) : undefined,
-        health_score: formData.health_score ? parseFloat(formData.health_score) : undefined,
-        price_per_serving: formData.price_per_serving ? parseFloat(formData.price_per_serving) : undefined,
+        ready_in_minutes: formData.ready_in_minutes
+          ? parseInt(formData.ready_in_minutes)
+          : undefined,
+        servings: formData.servings
+          ? parseInt(formData.servings)
+          : undefined,
+        health_score: formData.health_score
+          ? parseFloat(formData.health_score)
+          : undefined,
+        price_per_serving: formData.price_per_serving
+          ? parseFloat(formData.price_per_serving)
+          : undefined,
         categories: categories.length > 0 ? categories : undefined,
+        // Only attach nutrition if all fields are filled
+        nutrition: hasNutritionData(nutrition)
+          ? {
+              calories:      parseFloat(nutrition.calories),
+              protein:       parseFloat(nutrition.protein),
+              fat:           parseFloat(nutrition.fat),
+              carbohydrates: parseFloat(nutrition.carbohydrates),
+            }
+          : undefined,
       };
 
-      await createUserRecipe(recipeData);
+      await createUserRecipe(payload);
       router.push("/recipes");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create recipe");
+      setError(err.response?.data?.message || "Failed to create recipe. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  // ============================================================
+  // Render
+  // ============================================================
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white py-12">
@@ -101,10 +170,12 @@ export default function AddRecipe() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Add New Recipe
           </h1>
-          <p className="text-gray-600 mt-2">Create a new healthy recipe for the community</p>
+          <p className="text-gray-600 mt-2">
+            Create a new healthy recipe for the community
+          </p>
         </motion.div>
 
-        {/* Error Message */}
+        {/* Error */}
         {error && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -169,70 +240,31 @@ export default function AddRecipe() {
             />
           </div>
 
-          {/* Grid for numeric inputs */}
+          {/* Numeric fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Ready in Minutes
-              </label>
-              <input
-                type="number"
-                name="ready_in_minutes"
-                value={formData.ready_in_minutes}
-                onChange={handleChange}
-                min="0"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="30"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Servings
-              </label>
-              <input
-                type="number"
-                name="servings"
-                value={formData.servings}
-                onChange={handleChange}
-                min="1"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="4"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Health Score (0-100)
-              </label>
-              <input
-                type="number"
-                name="health_score"
-                value={formData.health_score}
-                onChange={handleChange}
-                min="0"
-                max="100"
-                step="0.1"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="85"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Price per Serving ($)
-              </label>
-              <input
-                type="number"
-                name="price_per_serving"
-                value={formData.price_per_serving}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="3.50"
-              />
-            </div>
+            {[
+              { name: "ready_in_minutes", label: "Ready in Minutes", placeholder: "30",  type: "number", min: "0" },
+              { name: "servings",         label: "Servings",          placeholder: "4",   type: "number", min: "1" },
+              { name: "health_score",     label: "Health Score (0-100)", placeholder: "85", type: "number", min: "0", max: "100", step: "0.1" },
+              { name: "price_per_serving",label: "Price per Serving ($)", placeholder: "3.50", type: "number", min: "0", step: "0.01" },
+            ].map((field) => (
+              <div key={field.name}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {field.label}
+                </label>
+                <input
+                  type={field.type}
+                  name={field.name}
+                  value={formData[field.name as keyof RecipeFormData] as string}
+                  onChange={handleChange}
+                  min={field.min}
+                  max={field.max}
+                  step={field.step}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder={field.placeholder}
+                />
+              </div>
+            ))}
           </div>
 
           {/* Categories */}
@@ -245,7 +277,12 @@ export default function AddRecipe() {
                 type="text"
                 value={categoryInput}
                 onChange={(e) => setCategoryInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddCategory())}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddCategory();
+                  }
+                }}
                 className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Add a category..."
               />
@@ -291,7 +328,13 @@ export default function AddRecipe() {
             />
           </div>
 
-          {/* Dietary Options */}
+          {/* ---- NUTRITION SECTION ---- */}
+          <NutritionFormSection
+            data={nutrition}
+            onChange={handleNutritionChange}
+          />
+
+          {/* Dietary options */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-3">
               Dietary Options
@@ -299,18 +342,15 @@ export default function AddRecipe() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { name: "vegetarian", label: "Vegetarian" },
-                { name: "vegan", label: "Vegan" },
-                { name: "gluten_free", label: "Gluten Free" },
+                { name: "vegan",      label: "Vegan" },
+                { name: "gluten_free",label: "Gluten Free" },
                 { name: "dairy_free", label: "Dairy Free" },
               ].map((option) => (
-                <label
-                  key={option.name}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
+                <label key={option.name} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     name={option.name}
-                    checked={formData[option.name as keyof typeof formData] as boolean}
+                    checked={formData[option.name as keyof RecipeFormData] as boolean}
                     onChange={handleChange}
                     className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
                   />
@@ -320,7 +360,7 @@ export default function AddRecipe() {
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <div className="flex gap-4 pt-6">
             <button
               type="button"

@@ -25,7 +25,6 @@ export const apiClient = axios.create({
    INTERCEPTORS
 ========================================================= */
 
-// Inject token
 apiClient.interceptors.request.use((config) => {
   const token = getAuthToken();
   if (token) {
@@ -34,7 +33,6 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto logout on 401
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<any>) => {
@@ -52,7 +50,6 @@ apiClient.interceptors.response.use(
    AUTH TYPES
 ========================================================= */
 
-// Single source of truth untuk shape User
 export interface User {
   id: number;
   name: string;
@@ -60,14 +57,12 @@ export interface User {
   role: "user" | "admin";
 }
 
-// Response dari /auth/login dan /auth/register
 export interface AuthResponse {
   access_token: string;
   user: User;
   message?: string;
 }
 
-// Response dari /auth/user
 export interface AuthUser {
   user: User;
 }
@@ -80,15 +75,10 @@ export const login = async (
   email: string,
   password: string
 ): Promise<AuthResponse> => {
-  const { data } = await apiClient.post("/auth/login", {
-    email,
-    password,
-  });
-
+  const { data } = await apiClient.post("/auth/login", { email, password });
   if (typeof window !== "undefined" && data.access_token) {
     localStorage.setItem("auth_token", data.access_token);
   }
-
   return data;
 };
 
@@ -103,17 +93,14 @@ export const register = async (
     password,
     password_confirmation: password,
   });
-
   return data;
 };
 
 export const logout = async () => {
   const { data } = await apiClient.post("/auth/logout");
-
   if (typeof window !== "undefined") {
     localStorage.removeItem("auth_token");
   }
-
   return data;
 };
 
@@ -170,6 +157,63 @@ export const fetchRecipeDetail = async (id: number) => {
 };
 
 /* =========================================================
+   NUTRITION APIs
+========================================================= */
+
+export interface NutritionPayload {
+  calories: number;
+  protein: number;
+  fat: number;
+  carbohydrates: number;
+}
+
+export interface NutritionResponse {
+  recipe_id: number;
+  data: {
+    nutrients: Array<{
+      name: string;
+      amount: number;
+      unit: string;
+      percentOfDailyNeeds: number;
+    }>;
+    caloricBreakdown: {
+      percentProtein: number;
+      percentFat: number;
+      percentCarbs: number;
+    };
+    weightPerServing: { amount: number; unit: string };
+  };
+}
+
+/** Get nutrition for a recipe (public) */
+export const fetchRecipeNutrition = async (
+  recipeId: number
+): Promise<NutritionResponse> => {
+  const { data } = await apiClient.get(`/recipes/${recipeId}/nutrition`);
+  return data;
+};
+
+/** Create or update nutrition for a recipe (admin only) */
+export const upsertRecipeNutrition = async (
+  recipeId: number,
+  payload: NutritionPayload
+): Promise<NutritionResponse & { message: string }> => {
+  const { data } = await apiClient.put(
+    `/recipes/${recipeId}/nutrition`,
+    payload
+  );
+  return data;
+};
+
+/** Delete nutrition for a recipe (admin only) */
+export const deleteRecipeNutrition = async (
+  recipeId: number
+): Promise<{ message: string }> => {
+  const { data } = await apiClient.delete(`/recipes/${recipeId}/nutrition`);
+  return data;
+};
+
+/* =========================================================
    FAVORITES APIs
 ========================================================= */
 
@@ -203,9 +247,7 @@ export const removeFromFavorites = async (recipeId: number) => {
 ========================================================= */
 
 export const getDietPlan = async (week = 1) => {
-  const { data } = await apiClient.get("/diet-plans", {
-    params: { week },
-  });
+  const { data } = await apiClient.get("/diet-plans", { params: { week } });
   return data;
 };
 
@@ -247,12 +289,7 @@ export const getDayNutrition = async (day: string, week = 1) => {
    ADMIN - USER RECIPES
 ========================================================= */
 
-export const getUserRecipes = async () => {
-  const { data } = await apiClient.get("/user-recipes");
-  return data;
-};
-
-export const createUserRecipe = async (recipeData: {
+export interface UserRecipePayload {
   title: string;
   summary?: string;
   image?: string;
@@ -266,12 +303,24 @@ export const createUserRecipe = async (recipeData: {
   vegan?: boolean;
   gluten_free?: boolean;
   dairy_free?: boolean;
-}) => {
+  /** Optional inline nutrition block */
+  nutrition?: NutritionPayload;
+}
+
+export const getUserRecipes = async () => {
+  const { data } = await apiClient.get("/user-recipes");
+  return data;
+};
+
+export const createUserRecipe = async (recipeData: UserRecipePayload) => {
   const { data } = await apiClient.post("/user-recipes", recipeData);
   return data;
 };
 
-export const updateUserRecipe = async (id: number, recipeData: any) => {
+export const updateUserRecipe = async (
+  id: number,
+  recipeData: Partial<UserRecipePayload>
+) => {
   const { data } = await apiClient.put(`/user-recipes/${id}`, recipeData);
   return data;
 };
