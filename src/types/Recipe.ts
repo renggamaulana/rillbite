@@ -133,3 +133,39 @@ export const emptyNutritionForm = (): NutritionFormData => ({
   fat: '',
   carbohydrates: '',
 });
+
+// ============================================================
+// User Recipe — create / update payloads
+// ============================================================
+
+export interface IngredientPayload {
+  name: string;
+  amount: number | null;
+  unit: string;
+  original: string;
+}
+
+export interface NutritionPayload {
+  calories: number;
+  protein: number;
+  fat: number;
+  carbohydrates: number;
+}
+
+export interface UserRecipePayload {
+  title: string;
+  summary?: string;
+  image?: string;
+  ready_in_minutes?: number;
+  servings?: number;
+  health_score?: number;
+  price_per_serving?: number;
+  instructions?: string;
+  categories?: string[];
+  vegetarian?: boolean;
+  vegan?: boolean;
+  gluten_free?: boolean;
+  dairy_free?: boolean;
+  ingredients?: IngredientPayload[];
+  nutrition?: NutritionPayload;
+}

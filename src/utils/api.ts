@@ -185,7 +185,6 @@ export interface NutritionResponse {
   };
 }
 
-/** Get nutrition for a recipe (public) */
 export const fetchRecipeNutrition = async (
   recipeId: number
 ): Promise<NutritionResponse> => {
@@ -193,7 +192,6 @@ export const fetchRecipeNutrition = async (
   return data;
 };
 
-/** Create or update nutrition for a recipe (admin only) */
 export const upsertRecipeNutrition = async (
   recipeId: number,
   payload: NutritionPayload
@@ -205,7 +203,6 @@ export const upsertRecipeNutrition = async (
   return data;
 };
 
-/** Delete nutrition for a recipe (admin only) */
 export const deleteRecipeNutrition = async (
   recipeId: number
 ): Promise<{ message: string }> => {
@@ -289,6 +286,13 @@ export const getDayNutrition = async (day: string, week = 1) => {
    ADMIN - USER RECIPES
 ========================================================= */
 
+export interface IngredientPayload {
+  name: string;
+  amount: number | null;
+  unit: string;
+  original: string;
+}
+
 export interface UserRecipePayload {
   title: string;
   summary?: string;
@@ -303,7 +307,7 @@ export interface UserRecipePayload {
   vegan?: boolean;
   gluten_free?: boolean;
   dairy_free?: boolean;
-  /** Optional inline nutrition block */
+  ingredients?: IngredientPayload[];
   nutrition?: NutritionPayload;
 }
 
