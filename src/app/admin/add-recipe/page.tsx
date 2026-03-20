@@ -33,6 +33,13 @@ interface InstructionStep {
   text: string;
 }
 
+interface IngredientRow {
+  id: string;
+  name: string;
+  amount: string;
+  unit: string;
+}
+
 const initialFormData: RecipeFormData = {
   title: "",
   summary: "",
@@ -52,6 +59,12 @@ const hasNutritionData = (n: NutritionFormData): boolean =>
 
 const newStep = (): InstructionStep => ({ id: crypto.randomUUID(), text: "" });
 
+const newIngredient = (): IngredientRow => ({ id: crypto.randomUUID(), name: "", amount: "", unit: "" });
+
+/** Build the "original" string the backend stores, e.g. "2 cup chicken breast" */
+const buildOriginal = (ing: IngredientRow): string =>
+  [ing.amount, ing.unit, ing.name].filter(Boolean).join(" ").trim();
+
 // ============================================================
 // Page
 // ============================================================
@@ -67,6 +80,7 @@ export default function AddRecipe() {
   const [formData, setFormData]           = useState<RecipeFormData>(initialFormData);
   const [nutrition, setNutrition]         = useState<NutritionFormData>(emptyNutritionForm());
   const [steps, setSteps]                 = useState<InstructionStep[]>([newStep()]);
+  const [ingredients, setIngredients]     = useState<IngredientRow[]>([newIngredient()]);
 
   if (!isAdmin) { router.push("/"); return null; }
 
@@ -119,6 +133,36 @@ export default function AddRecipe() {
   const buildInstructions = () =>
     steps.map((s) => s.text.trim()).filter(Boolean).map((t, i) => `${i + 1}. ${t}`).join("\n");
 
+  // Ingredient helpers
+  const updateIngredient = (id: string, field: keyof IngredientRow, value: string) =>
+    setIngredients((p) => p.map((ing) => ing.id === id ? { ...ing, [field]: value } : ing));
+
+  const addIngredientAfter = (id: string) =>
+    setIngredients((p) => {
+      const idx = p.findIndex((ing) => ing.id === id);
+      const next = [...p];
+      next.splice(idx + 1, 0, newIngredient());
+      return next;
+    });
+
+  const removeIngredient = (id: string) => {
+    if (ingredients.length === 1) return;
+    setIngredients((p) => p.filter((ing) => ing.id !== id));
+  };
+
+  // Tab on name field → focus amount field of same row
+  const handleIngredientNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, id: string) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addIngredientAfter(id);
+      setTimeout(() => {
+        const rows = document.querySelectorAll<HTMLInputElement>(".ingredient-name");
+        const idx = [...rows].findIndex((el) => el.dataset.ingId === id);
+        rows[idx + 1]?.focus();
+      }, 50);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const instructions = buildInstructions();
@@ -135,6 +179,14 @@ export default function AddRecipe() {
         health_score:      formData.health_score       ? parseFloat(formData.health_score)       : undefined,
         price_per_serving: formData.price_per_serving  ? parseFloat(formData.price_per_serving)  : undefined,
         categories:        categories.length > 0       ? categories                              : undefined,
+        ingredients: ingredients
+          .filter((ing) => ing.name.trim())
+          .map((ing) => ({
+            name:     ing.name.trim(),
+            amount:   ing.amount ? parseFloat(ing.amount) : null,
+            unit:     ing.unit.trim(),
+            original: buildOriginal(ing),
+          })),
         nutrition: hasNutritionData(nutrition)
           ? {
               calories:      parseFloat(nutrition.calories),
@@ -251,6 +303,110 @@ export default function AddRecipe() {
                 </span>
               ))}
             </div>
+          </div>
+
+          {/* ── Ingredients ───────────────────────────────────────────────── */}
+          <div>
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700">Ingredients</label>
+                <p className="text-xs text-gray-400 mt-1">
+                  Tulis tiap bahan secara terpisah ·{" "}
+                  <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-200 rounded text-gray-500 font-mono text-[11px]">Enter</kbd>{" "}
+                  untuk tambah bahan baru
+                </p>
+              </div>
+              <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full flex-shrink-0 mt-0.5">
+                {ingredients.filter((i) => i.name.trim()).length}/{ingredients.length} items
+              </span>
+            </div>
+
+            {/* Column headers */}
+            <div className="grid grid-cols-[1.5rem_1fr_6rem_6rem_1.5rem] gap-2 mb-1.5 px-0.5">
+              <div />
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Ingredient</span>
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Amount</span>
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Unit</span>
+              <div />
+            </div>
+
+            <AnimatePresence initial={false}>
+              {ingredients.map((ing, index) => (
+                <motion.div
+                  key={ing.id}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="grid grid-cols-[1.5rem_1fr_6rem_6rem_1.5rem] gap-2 mb-2 items-center"
+                >
+                  {/* Row number */}
+                  <span className="text-xs font-bold text-gray-300 text-center">{index + 1}</span>
+
+                  {/* Name */}
+                  <input
+                    type="text"
+                    value={ing.name}
+                    onChange={(e) => updateIngredient(ing.id, "name", e.target.value)}
+                    onKeyDown={(e) => handleIngredientNameKeyDown(e, ing.id)}
+                    data-ing-id={ing.id}
+                    className="ingredient-name w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    placeholder="e.g., Chicken breast"
+                  />
+
+                  {/* Amount */}
+                  <input
+                    type="number"
+                    value={ing.amount}
+                    onChange={(e) => updateIngredient(ing.id, "amount", e.target.value)}
+                    min="0" step="any"
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    placeholder="2"
+                  />
+
+                  {/* Unit */}
+                  <input
+                    type="text"
+                    value={ing.unit}
+                    onChange={(e) => updateIngredient(ing.id, "unit", e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    placeholder="cup"
+                  />
+
+                  {/* Remove */}
+                  <button
+                    type="button"
+                    onClick={() => removeIngredient(ing.id)}
+                    disabled={ingredients.length === 1}
+                    className="p-1 text-gray-300 hover:text-red-400 transition-colors disabled:opacity-0"
+                  >
+                    <FaTimes size={12} />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            <button
+              type="button"
+              onClick={() => setIngredients((p) => [...p, newIngredient()])}
+              className="mt-1 flex items-center gap-2 px-4 py-2 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors font-medium"
+            >
+              <FaPlus size={11} /> Add Ingredient
+            </button>
+
+            {/* Preview: shows the "original" string that will be saved */}
+            {ingredients.some((i) => i.name.trim()) && (
+              <details className="mt-4 group">
+                <summary className="text-xs text-gray-400 cursor-pointer select-none hover:text-gray-500 list-none flex items-center gap-1.5 transition-colors">
+                  <span className="group-open:rotate-90 transition-transform inline-block text-[10px]">▶</span>
+                  Preview "original" field
+                </summary>
+                <ul className="mt-2 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 font-mono border border-gray-100 space-y-1">
+                  {ingredients.filter((i) => i.name.trim()).map((i) => (
+                    <li key={i.id}>• {buildOriginal(i)}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </div>
 
           {/* ── Instructions Step-by-Step ──────────────────────────────────── */}
